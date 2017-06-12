@@ -1,0 +1,6 @@
+*.old
+*.swp
+*.json
+test.py
+*__pycache__*
+.Trash*
