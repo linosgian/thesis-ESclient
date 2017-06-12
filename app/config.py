@@ -1,6 +1,7 @@
 import datetime
+import os
+DISTRICT = os.environ['DISTRICT']
 
-DISTRICT = 'okeanos'
 EVENT_INDEX_MIDDLE_NAME = 'events'
 today = datetime.date.today().strftime("%Y.%m.%d")
 service_list = ['sshd', 'nginx', 'dovecot', 'all']
