@@ -1,10 +1,10 @@
 import datetime
 
-DISTRICT = 'netmode'
+DISTRICT = 'okeanos'
 EVENT_INDEX_MIDDLE_NAME = 'events'
 today = datetime.date.today().strftime("%Y.%m.%d")
 service_list = ['sshd', 'nginx', 'dovecot', 'all']
-ssh_list = ['snf-749092', 'snf-754841', 'mitigation-2', 'mitigation-1']
+ssh_list = ['snf-749092', 'snf-754841']
 extra = ['xcheck', 'cidrs', 'country']
 
 config = {

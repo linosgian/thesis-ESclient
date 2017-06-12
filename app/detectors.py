@@ -9,14 +9,14 @@ from . import userlog
 
 class BaseDetector(ABC):
 
-    def __init__(self, es_client, service, indeces="*", doc_type=None):
-        self.indeces = indeces
+    def __init__(self, es_client, service, indices="*", doc_type=None):
+        self.indices = indices
         self.doc_type = doc_type
         self.es_client = es_client
         self.service = service
         userlog.info(' Running event generation on: -doc_type:\t {0}'.format(doc_type))
         userlog.info('\t\t\t\t -service:\t {0}'.format(service))
-        userlog.info('\t\t\t\t -indeces:\t {0}'.format(indeces))
+        userlog.info('\t\t\t\t -indices:\t {0}'.format(indices))
 
     @abstractmethod
     def query_es(self, *args):
@@ -62,7 +62,7 @@ class SSHDetector(BaseDetector):
     def query_es(self):
         batch_size = cfg['general']['batch_size']
             #.filter('range', ** { '@timestamp': {'gte': 'now-1h', 'lt': 'now'}}) \
-        s = Search(using=self.es_client, index=self.indeces, doc_type=self.doc_type) \
+        s = Search(using=self.es_client, index=self.indices, doc_type=self.doc_type) \
             .query('match', service=self.service) \
             .sort('@timestamp') \
             .params(preserve_order=True, size=batch_size)
@@ -74,7 +74,7 @@ class DovecotDetector(BaseDetector):
     def query_es(self):
         # @timestamp contains the time the log line arrived at logstash
         # Not the event's timestamp
-        s = Search(using=self.es_client, index=self.indeces, doc_type=self.doc_type) \
+        s = Search(using=self.es_client, index=self.indices, doc_type=self.doc_type) \
             .query(~Q('match', user='<VALID_USER>')) \
             .query('match', service=self.service) \
             .sort('@timestamp') \
@@ -84,7 +84,7 @@ class DovecotDetector(BaseDetector):
 class WebDetector(BaseDetector):
 
     def query_es(self):
-        s = Search(using=self.es_client, index=self.indeces, doc_type=self.doc_type) \
+        s = Search(using=self.es_client, index=self.indices, doc_type=self.doc_type) \
             .query('match', service=self.service) \
             .sort('@timestamp') \
             .params(preserve_order=True)
