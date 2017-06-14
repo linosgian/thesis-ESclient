@@ -140,12 +140,19 @@ def ips_to_cidrs(attackers, mask):
             network = ipaddress.IPv4Network(ip.exploded+'/'+str(mask), strict=False).exploded
             if network in cidrs:
                 cidrs[network]['participants'] += 1
-                cidrs[network]['attackers'].append((attacker['attacker_ip'], attacker['attempts']))
-            else: 
+                cidrs[network]['attackers'].append({
+                    'attacker_ip'   : attacker['attacker_ip'], 
+                    'attempts'      : attacker['attempts'],
+                    })
+            else:
                 cidrs[network] = {
                 'participants': 1, 
                 'total_attempts': 0, 
-                'attackers':[(attacker['attacker_ip'], attacker['attempts'])]}
+                'attackers':[{
+                    'attacker_ip'   : attacker['attacker_ip'], 
+                    'attempts'      : attacker['attempts']
+                    }]
+                }
             cidrs[network]['total_attempts'] += attacker['attempts']
             total_attempts += attacker['attempts']
     output_cidrs = []
