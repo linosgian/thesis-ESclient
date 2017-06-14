@@ -74,8 +74,7 @@ def aggregator(service, indices, aggr_type, lt, gt, extra, mask):
                 cidrs = ips_to_cidrs(victim_dict['attackers'], mask)
                 victim_dict['cidrs'] = cidrs
             victims.append(victim_dict)
-        source['victims'] = victims
-        
+        source['victims'] = victims    
     elif aggr_type == 'attacker':
         s.aggs.bucket('per_attacker', 'terms', field='source_ip.keyword', size=10000) 
         response = s.execute() 
@@ -90,13 +89,12 @@ def aggregator(service, indices, aggr_type, lt, gt, extra, mask):
                 blacklisted = (True if attacker.key in blacklist else False)
                 attacker_dict['blacklisted'] =  blacklisted            
             attackers.append(attacker_dict)
-            #print('{0:15} | {1:7} | {2} '.format(attacker.key, attacker.doc_count, blacklisted))
         if 'cidrs' in extra:
             cidrs = ips_to_cidrs(attackers, mask)
             source['cidrs'] = cidrs
         source['attackers'] = attackers
     #pprint(source)
-    if not cfg['general']['DEBUG']:
+    if not cfg['general']['DEBUG'] and aggr_type == 'attacker':
         index = '{0}-aggrevents-{1}'.format(cfg['general']['district'], cfg['general']['today'])
         ttp_ip = cfg['general']['ttp_ip']
         ttp_port = cfg['general']['ttp_port']
@@ -105,9 +103,11 @@ def aggregator(service, indices, aggr_type, lt, gt, extra, mask):
         userlog.info(' Index: {0} \t doc_type: {1} \t '.format(index, doc_type))    
         ttp_es = ES(hosts=ttp_ip, port=ttp_port)
         ttp_es.index(index=index, doc_type=doc_type, body=source)
+        source['index'] = index
         with open('latest_aggr.json','w+') as f:
             json.dump(source, f)
     else:
+        pprint(source)
         userlog.info(' Debug is turned on, no events will be pushed to TTP')
 
 def construct_blacklist():
@@ -140,8 +140,12 @@ def ips_to_cidrs(attackers, mask):
             network = ipaddress.IPv4Network(ip.exploded+'/'+str(mask), strict=False).exploded
             if network in cidrs:
                 cidrs[network]['participants'] += 1
+                cidrs[network]['attackers'].append((attacker['attacker_ip'], attacker['attempts']))
             else: 
-                cidrs[network] = {'participants': 1, 'total_attempts': 0}
+                cidrs[network] = {
+                'participants': 1, 
+                'total_attempts': 0, 
+                'attackers':[(attacker['attacker_ip'], attacker['attempts'])]}
             cidrs[network]['total_attempts'] += attacker['attempts']
             total_attempts += attacker['attempts']
     output_cidrs = []
