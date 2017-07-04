@@ -106,8 +106,12 @@ def aggregator(service, indices, aggr_type, lt, gt, extra, mask):
         source['index'] = index
         with open('latest_aggr.json','w+') as f:
             json.dump(source, f)
+        return
+    elif aggr_type == 'victim':
+        pprint_events(source, aggr_type)
+        userlog.error(' Victim-based aggregations cannot be pushed to TTP')
     else:
-        pprint(source)
+        pprint_events(source, aggr_type)
         userlog.info(' Debug is turned on, no events will be pushed to TTP')
 
 def construct_blacklist():
@@ -161,3 +165,15 @@ def ips_to_cidrs(attackers, mask):
         values['network'] = cidr
         output_cidrs.append(values)
     return output_cidrs
+
+def pprint_events(events, type):
+    if type == 'victim':
+        for victim in events['victims']:
+            print('Victim: {0}'.format(victim['victim_host']))
+            print('\t {0:20} | {1:10}'.format('Attacker', 'Attempts'))
+            for attacker in victim['attackers']:
+                print('\t {0:20} | {1:10}'.format(attacker['attacker_ip'], attacker['attempts']))
+    else:
+        print('{0:20} | {1:10}'.format('Attacker', 'Attempts'))
+        for attacker in events['attackers']:
+            print('{0:20} | {1:10}'.format(attacker['attacker_ip'], attacker['attempts']))

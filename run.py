@@ -44,7 +44,7 @@ parser.add_argument('-r' ,'--debug_off', required=False, action='store_true',
                           'WARNING: This will not output any events to stdout but '
                           'index them in today\'s index')
 parser.add_argument('-s', '--service', choices=service_list,
-                    help='Insert the service that you want to audit', default='all')
+                    help='Insert the service that you want to audit', required=True)
 parser.add_argument('--agg' ,'-a',
                     help='Indicate if you want to use the aggregator.',
                     choices=['victim', 'attacker'])
@@ -60,7 +60,11 @@ parser.add_argument('--extra', choices=extra, nargs='*', default=[],
 parser.add_argument('--mask', type=int, choices=range(16,33),
                     help='If you chose to aggregate into cidrs, define the mask.\n')
 
-args = parser.parse_args()
+try:
+    args = parser.parse_args()
+except:
+    parser.print_help()
+    exit(0)
 if args.debug_off: 
     cfg['general']['DEBUG']=False
     userlog.warn(' Debug mode is off, events will be reindexed')
