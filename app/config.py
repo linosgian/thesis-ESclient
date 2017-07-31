@@ -1,11 +1,11 @@
 import datetime
 import os
-DISTRICT = os.environ['DISTRICT']
 
+DISTRICT = os.environ['DISTRICT']
 EVENT_INDEX_MIDDLE_NAME = 'events'
 today = datetime.date.today().strftime("%Y.%m.%d")
-service_list = ['sshd', 'nginx', 'dovecot', 'all']
-ssh_list = ['snf-749092', 'snf-754841']
+service_list = ['sshd', 'nginx', 'dovecot']
+ssh_list = ['snf-749092', 'snf-754841'] # Machines that have ssh-password auth enabled
 extra = ['xcheck', 'cidrs', 'country']
 
 config = {
@@ -20,5 +20,10 @@ config = {
     },
     'ssh':{
         'blacklist_url': 'https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/firehol_level2.netset'
+    },
+    'services_to_doctypes': {
+        'sshd': 'auth',
+        'nginx': 'webserver',
+        'dovecot': 'mail',
     }
 }
