@@ -95,8 +95,8 @@ def main():
         elif args.service == 'sshd': 
            detector = SSHDetector(client, doc_type='auth', service='sshd', indices=args.indices)
         
-        response = detector.query_es()
-        detector.process_response(response)
+        response_gen = detector.execute_query(args.gt)
+        detector.process_response(response_gen)
 
 if __name__ == "__main__":
     main()

@@ -11,6 +11,7 @@ class BaseDetector(ABC):
     """
     Base detector class. Contains the unified process_response logic
     """
+    
     def __init__(self, es_client, service, indices="*", doc_type=None):
         self.indices = indices
         self.doc_type = doc_type
@@ -21,9 +22,16 @@ class BaseDetector(ABC):
         userlog.info('\t\t\t\t -indices:\t {0}'.format(indices))
 
     @abstractmethod
-    def query_es(self, *args):
+    def build_query(self, *args):
         pass
 
+    def execute_query(self, gt):
+        """ This function is used in order to perform periodic processing of events """
+        query = self.build_query()
+        if gt:
+            search = query.filter('range', ** { '@timestamp': {'gte': 'now-'+gt, 'lt': 'now'}})
+            return search.scan() 
+        return query.scan()    
     def process_response(self, response):
         """
         Parses loglines, produces events, and reindexes them back to today's index
@@ -62,8 +70,8 @@ class BaseDetector(ABC):
             userlog.info('Batch processing ended...')
             if cfg['general']['DEBUG']:
                 for x in gen:
-                    pprint(x)
-                    print('\n' + '-----------------------------','\n')
+                    pprint(x['_source']['@timestamp'])
+                    #print('\n' + '-----------------------------','\n')
             else:
                 userlog.info('Indexing started...')
                 doc_count = helpers.bulk(es, gen)
@@ -71,32 +79,32 @@ class BaseDetector(ABC):
 
 class SSHDetector(BaseDetector):
 
-    def query_es(self):
+    def build_query(self):
         batch_size = cfg['general']['batch_size']
         s = Search(using=self.es_client, index=self.indices, doc_type=self.doc_type) \
             .query('match', service=self.service) \
             .sort('@timestamp') \
             .params(preserve_order=True, size=batch_size)
-        return s.scan()  # Search.scan() returns a generator to evaluate.
+        return s 
 
 
 class DovecotDetector(BaseDetector):
 
-    def query_es(self):
+    def build_query(self):
         s = Search(using=self.es_client, index=self.indices, doc_type=self.doc_type) \
             .query(~Q('match', user='<VALID_USER>')) \
             .query('match', service=self.service) \
             .sort('@timestamp') \
             .params(preserve_order=True)        
-        return s.scan()
+        return s
 
 class WebDetector(BaseDetector):
 
-    def query_es(self):
+    def build_query(self):
         s = Search(using=self.es_client, index=self.indices, doc_type=self.doc_type) \
             .query('match', service=self.service) \
             .sort('@timestamp') \
             .params(preserve_order=True)
-        return s.scan()
+        return s
 
 import app.processors
