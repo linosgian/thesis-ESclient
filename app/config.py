@@ -1,9 +1,9 @@
-import datetime
+from datetime import datetime
 import os
 
 DISTRICT = os.environ['DISTRICT']
 EVENT_INDEX_MIDDLE_NAME = 'events'
-today = datetime.date.today().strftime("%Y.%m.%d")
+today = datetime.utcnow().date().strftime("%Y.%m.%d")
 service_list = ['sshd', 'nginx', 'dovecot']
 ssh_list = ['snf-749092', 'snf-754841'] # Machines that have ssh-password auth enabled
 extra = ['xcheck', 'cidrs', 'country']
