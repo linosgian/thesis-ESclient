@@ -268,7 +268,7 @@ def pprint_events(events, type):
             print('Victim: {0}'.format(victim['victim_host']))
             print('\t {0:20} | {1:10}'.format('Attacker', 'Attempts'))
             for attacker in victim['attackers']:
-                print('\t {0:20} | {1:10}'.format(attacker['attacker_ip'], attacker['attempts']))
+                print('\t {0:20} | {1:10} | {2:20}'.format(attacker['attacker_ip'], attacker['attempts'], attacker['blacklisted']))
     else:
         if 'cidrs' in events:
             print('{0:20} | {1:20} | {2:20}'.format('CIDR', 'Attempts', 'Number of Participants'))
@@ -276,7 +276,8 @@ def pprint_events(events, type):
             for cidr in cidrs:
                 cidr.pop('attackers')
                 if cidr['total_attempts'] > 100:
-                    print('{0:20} | {1:20} | {2:20} | {3}'.format(cidr['network'], cidr['total_attempts'], cidr['participants'], cidr['blacklisted']))
+                    print('{0:20} | {1:20} | {2:20} | {3}'.format(
+                            cidr['network'], cidr['total_attempts'], cidr['participants']))
             cidrs = [d for d in cidrs if d['total_attempts'] > 100]
             import pandas as pd
             df = pd.DataFrame(cidrs)
@@ -284,6 +285,6 @@ def pprint_events(events, type):
             df.to_excel(writer, sheet_name='1')
             writer.save()
             return
-        print('{0:20} | {1:10}'.format('Attacker', 'Attempts', 'blacklisted'))
+        print('{0:20} | {1:10} | {2}'.format('Attacker', 'Attempts', 'blacklisted'))
         for attacker in events['attackers']:
             print('{0:20} | {1:10} | {2}'.format(attacker['attacker_ip'], attacker['attempts'], attacker['blacklisted']))
