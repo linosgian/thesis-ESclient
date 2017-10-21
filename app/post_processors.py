@@ -258,12 +258,32 @@ def ips_to_cidrs(attackers, mask):
 def pprint_events(events, type):
     """ Prints events in a human readable manner """
     if type == 'victim':
+        if 'cidrs' in events:
+            print('Victim: {0:20} | {1:20}'.format('CIDR', 'Attempts'))
+            for victim in events['victims']:
+                for cidr in victim['cidrs']:
+                    print('\t {0:20} | {1:20} | {2}'.format(cidr['network'], cidr['total_attempts'], cidr['participants']))
+            return
         for victim in events['victims']:
             print('Victim: {0}'.format(victim['victim_host']))
             print('\t {0:20} | {1:10}'.format('Attacker', 'Attempts'))
             for attacker in victim['attackers']:
                 print('\t {0:20} | {1:10}'.format(attacker['attacker_ip'], attacker['attempts']))
     else:
-        print('{0:20} | {1:10}'.format('Attacker', 'Attempts'))
+        if 'cidrs' in events:
+            print('{0:20} | {1:20} | {2:20}'.format('CIDR', 'Attempts', 'Number of Participants'))
+            cidrs = sorted(events['cidrs'], key=lambda k: k['participants'], reverse=True)
+            for cidr in cidrs:
+                cidr.pop('attackers')
+                if cidr['total_attempts'] > 100:
+                    print('{0:20} | {1:20} | {2:20} | {3}'.format(cidr['network'], cidr['total_attempts'], cidr['participants'], cidr['blacklisted']))
+            cidrs = [d for d in cidrs if d['total_attempts'] > 100]
+            import pandas as pd
+            df = pd.DataFrame(cidrs)
+            writer = pd.ExcelWriter('test.xlsx', engine='xlsxwriter')
+            df.to_excel(writer, sheet_name='1')
+            writer.save()
+            return
+        print('{0:20} | {1:10}'.format('Attacker', 'Attempts', 'blacklisted'))
         for attacker in events['attackers']:
-            print('{0:20} | {1:10}'.format(attacker['attacker_ip'], attacker['attempts']))
+            print('{0:20} | {1:10} | {2}'.format(attacker['attacker_ip'], attacker['attempts'], attacker['blacklisted']))
