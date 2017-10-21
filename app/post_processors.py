@@ -276,7 +276,7 @@ def pprint_events(events, type):
             for cidr in cidrs:
                 cidr.pop('attackers')
                 if cidr['total_attempts'] > 100:
-                    print('{0:20} | {1:20} | {2:20} | {3}'.format(
+                    print('{0:20} | {1:20} | {2:20}'.format(
                             cidr['network'], cidr['total_attempts'], cidr['participants']))
             cidrs = [d for d in cidrs if d['total_attempts'] > 100]
             import pandas as pd
