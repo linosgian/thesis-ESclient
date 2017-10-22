@@ -281,7 +281,7 @@ def pprint_events(events, type):
             cidrs = [d for d in cidrs if d['total_attempts'] > 100]
             import pandas as pd
             df = pd.DataFrame(cidrs)
-            writer = pd.ExcelWriter('test.xlsx', engine='xlsxwriter')
+            writer = pd.ExcelWriter('cidrs_netmode.xlsx', engine='xlsxwriter')
             df.to_excel(writer, sheet_name='1')
             writer.save()
             return
