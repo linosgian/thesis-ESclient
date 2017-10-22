@@ -288,3 +288,8 @@ def pprint_events(events, type):
         print('{0:20} | {1:10} | {2}'.format('Attacker', 'Attempts', 'blacklisted'))
         for attacker in events['attackers']:
             print('{0:20} | {1:10} | {2}'.format(attacker['attacker_ip'], attacker['attempts'], attacker['blacklisted']))
+        import pandas as pd
+        df = pd.DataFrame(events['attackers'])
+        writer = pd.ExcelWriter('singleIP_blacklisted_netmode.xlsx', engine='xlsxwriter')
+        df.to_excel(writer, sheet_name='1')
+        writer.save()
