@@ -12,7 +12,9 @@ def aggregator(service, indices, aggr_type, lt, gt, extra, mask):
     If enabled, produces the /n subnets in order to group the attackers.
     Lastly, lt and gt compose the time frame we are interested in.
     """
-    internal_es = ES()
+
+    # Raise this timeout if indexing times out after the 30s.
+    internal_es = ES(timeout=30)
     
     doc_type = cfg['services_to_doctypes'][service]
     search = Search(using=internal_es, index=indices, doc_type=doc_type) \
@@ -85,7 +87,7 @@ def aggregator(service, indices, aggr_type, lt, gt, extra, mask):
         pprint_events(source, aggr_type)
         userlog.error('Victim-based aggregations cannot be pushed to TTP')
     else:
-        pprint_events(source, aggr_type)
+        pprint_events(source, aggr_type, '{0}_{1}'.format(gt, lt), mask)
         userlog.info('Debug is turned on, no events will be pushed to TTP')
 
 def send_to_ttp(district, today, ttp_ip, ttp_port, source, doc_type):
@@ -98,7 +100,7 @@ def send_to_ttp(district, today, ttp_ip, ttp_port, source, doc_type):
     userlog.info('TTP ip:port : {0}:{1}'.format(ttp_ip, ttp_port))
     userlog.info('Index: {0} \t doc_type: {1} \t '.format(index, doc_type))    
     
-    ttp_es = ES(hosts=ttp_ip, port=ttp_port)
+    ttp_es = ES(hosts=ttp_ip, port=ttp_port, timeout=30)
     ttp_es.index(index=index, doc_type=doc_type, body=source)
     
     return index    
@@ -255,7 +257,7 @@ def ips_to_cidrs(attackers, mask):
         output_cidrs.append(values)
     return output_cidrs
 
-def pprint_events(events, type):
+def pprint_events(events, type, ext_str, mask):
     """ Prints events in a human readable manner """
     if type == 'victim':
         if 'cidrs' in events:
@@ -272,18 +274,27 @@ def pprint_events(events, type):
     else:
         if 'cidrs' in events:
             print('{0:20} | {1:20} | {2:20}'.format('CIDR', 'Attempts', 'Number of Participants'))
-            cidrs = sorted(events['cidrs'], key=lambda k: k['participants'], reverse=True)
+            cidrs = sorted(events['cidrs'], key=lambda k: k['total_attempts'], reverse=True)
             for cidr in cidrs:
                 cidr.pop('attackers')
-                if cidr['total_attempts'] > 100:
+                if cidr['total_attempts'] > 100 and cidr['participants'] > 1:
                     print('{0:20} | {1:20} | {2:20}'.format(
                             cidr['network'], cidr['total_attempts'], cidr['participants']))
-            cidrs = [d for d in cidrs if d['total_attempts'] > 100]
-            import pandas as pd
-            df = pd.DataFrame(cidrs)
-            writer = pd.ExcelWriter('cidrs_netmode.xlsx', engine='xlsxwriter')
-            df.to_excel(writer, sheet_name='1')
-            writer.save()
+            cidrs = [d for d in cidrs if d['total_attempts'] > 10]
+            # import pandas as pd
+            # df = pd.DataFrame(cidrs)
+
+            # writer = pd.ExcelWriter('cidrs_netmode_{0}.xlsx'.format(ext_str), engine='xlsxwriter')
+            # df.to_excel(writer, sheet_name='1')
+            # writer.save()
+
+            remainder = 32 - mask
+            pow_of_2 = 2 ** remainder
+            sum = 0
+            for cidr in cidrs:
+                perc = (cidr['participants'] / pow_of_2) * 100
+                sum += perc
+            print(sum/len(cidrs))
             return
         print('{0:20} | {1:10} | {2}'.format('Attacker', 'Attempts', 'blacklisted'))
         for attacker in events['attackers']:
